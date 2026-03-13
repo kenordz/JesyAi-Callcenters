@@ -1,0 +1,29 @@
+# Core dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+httpx==0.24.1  # Compatible with both openai and supabase
+requests==2.31.0
+
+# OpenAI
+openai==1.12.0
+websockets==12.0
+
+# Supabase
+supabase==2.0.0
+
+# Twilio (WhatsApp notifications)
+twilio==8.10.0
+
+# Date/Time handling
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Async support
+asyncio==3.4.3
+aiofiles==23.2.1
+
+# Logging and monitoring
+python-json-logger==2.0.7
+
+# Environment variables
+python-dotenv==1.0.0
