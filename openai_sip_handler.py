@@ -61,7 +61,7 @@ class OpenAISIPHandler:
         }
 
         # PROJECT_ID para el SIP endpoint
-        self.project_id = "proj_13IrDjJ3Xb2qJ9QL5COFj5FH"
+        self.project_id = Config.OPENAI_PROJECT_ID
 
         # Initialize OOP services
         self.db = DatabaseManager()
@@ -76,22 +76,24 @@ class OpenAISIPHandler:
             tenant_service=self.tenant_service
         )
 
+        # Vicidial service para call center operations
+        self.vicidial_service = VicidialService(database_manager=self.db)
+
+        # Client service para tracking de clientes recurrentes
+        self.client_service = ClientService(database_manager=self.db)
+
         # Function call handler centralizado (now call center only)
         self.function_call_handler = FunctionCallHandlerService(
             database_manager=self.db,
-            tenant_service=self.tenant_service
+            tenant_service=self.tenant_service,
+            vicidial_service=self.vicidial_service,
+            client_service=self.client_service
         )
-
-        # Vicidial service para call center operations
-        self.vicidial_service = VicidialService(database_manager=self.db)
 
         # Tenant validation service
         self.tenant_validation_service = TenantValidationService(
             database_manager=self.db
         )
-
-        # Client service para tracking de clientes recurrentes
-        self.client_service = ClientService(database_manager=self.db)
 
         # WhatsApp service para confirmaciones y recordatorios
         self.whatsapp_service = WhatsAppService(db_manager=self.db)
@@ -101,9 +103,7 @@ class OpenAISIPHandler:
             database_manager=self.db,
             transcription_service=self.transcription_service,
             call_history_service=self.call_history_service,
-            tenant_validation_service=self.tenant_validation_service,
-            client_service=self.client_service,
-            whatsapp_service=self.whatsapp_service
+            vicidial_service=self.vicidial_service
         )
 
         # Almacenar metadata de llamadas activas
@@ -688,7 +688,7 @@ Ayuda a los clientes con información general."""
                 tenant_id=tenant_id,
                 branch_id=branch_id,
                 caller_phone=caller_phone,
-                duration_seconds=duration,
+                call_duration=duration,
                 technical_logs=technical_logs
             )
 
@@ -947,6 +947,13 @@ Ayuda a los clientes con información general."""
                     self.call_phone_numbers[call_id] = from_number
                     self.call_start_times[call_id] = datetime.now()
                     logger.info(f"[SIP-CALL] Metadata guardada - From: {from_number}, To: {to_number}")
+
+                    # Match con Vicidial (si hay llamada pendiente en ventana de 10s)
+                    vicidial_match = self.vicidial_service.match_vicidial_to_sip(call_id)
+                    if vicidial_match:
+                        logger.info(f"[SIP-CALL] Vicidial match encontrado: {vicidial_match}")
+                    else:
+                        logger.debug(f"[SIP-CALL] No Vicidial match (llamada directa o timing miss)")
 
                     # Conectar WebSocket
                     logger.info(f"[SIP-CALL] Conectando WebSocket para transcripciones...")

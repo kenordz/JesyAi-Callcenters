@@ -58,8 +58,8 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting JesyAI Call Center System")
     logger.info(f"📞 SIP Endpoint: {Config.OPENAI_SIP_ENDPOINT}")
     logger.info(f"🤖 Model: {Config.OPENAI_MODEL}")
-    logger.info(f"🏢 Tenant: {Config.TENANT_ID}")
-    logger.info(f"📍 Branch: {Config.BRANCH_ID}")
+    logger.info(f"🏢 Multitenant mode (per-branch detection)")
+    logger.info(f"📞 Vicidial API: {Config.VICIDIAL_API_URL or 'not configured'}")
     yield
     logger.info("👋 Shutting down JesyAI Call Center System")
 
@@ -112,7 +112,7 @@ async def health_check():
         "supabase_configured": bool(os.environ.get("SUPABASE_ANON_KEY")),
         "webhook_secret_configured": bool(Config.OPENAI_WEBHOOK_SECRET),
         "model": Config.OPENAI_MODEL,
-        "voice": Config.JESSICA_VOICE
+        "voice": Config.VOICE
     }
 
 @app.post("/webhook/openai-sip")
@@ -233,46 +233,45 @@ async def get_transcript_ga(call_id: str):
 
 # ==================== VICIDIAL INTEGRATION ENDPOINTS ====================
 
-@app.post("/api/vicidial/call-start")
-async def vicidial_call_start(request: Request):
+@app.get("/api/vicidial/call-start")
+async def vicidial_call_start(
+    campaign: str = "",
+    call_id: str = "",
+    agent_user: str = "2000"
+):
     """
-    Webhook endpoint from Vicidial when a call starts
-    Receives campaign + call_id parameters and registers the call mapping
+    GET webhook from Vicidial when a call starts.
+    Vicidial sends: GET /api/vicidial/call-start?campaign=X&call_id=Y&agent_user=Z
+    Registers the call as pending, awaiting SIP match by timing.
     """
     try:
-        data = await request.json()
+        if not call_id:
+            logger.warning("[VICIDIAL] Missing call_id in request")
+            raise HTTPException(status_code=400, detail="Missing call_id")
 
-        campaign_id = data.get('campaign_id')
-        call_id = data.get('call_id')
+        logger.info(f"[VICIDIAL] Received call-start webhook - campaign: {campaign}, call_id: {call_id}, agent_user: {agent_user}")
 
-        if not campaign_id or not call_id:
-            logger.warning("[VICIDIAL] Missing campaign_id or call_id in request")
-            raise HTTPException(status_code=400, detail="Missing campaign_id or call_id")
-
-        logger.info(f"[VICIDIAL] Received call-start webhook - campaign: {campaign_id}, call_id: {call_id}")
-
-        # Import and call vicidial_service to register the mapping
-        from services.vicidial_service import VicidialService
-        vicidial_service = VicidialService()
-
-        result = await vicidial_service.register_call_mapping(
-            campaign_id=campaign_id,
-            call_id=call_id
+        # Use the shared VicidialService instance from the SIP handler
+        result = openai_sip_handler.vicidial_service.register_pending_call(
+            vicidial_call_id=call_id,
+            campaign=campaign,
+            agent_user=agent_user
         )
 
-        logger.info(f"[VICIDIAL] Call mapping registered: {result}")
+        logger.info(f"[VICIDIAL] Pending call registered: {result}")
 
         return {
             "status": "success",
-            "message": "Call mapping registered",
-            "campaign_id": campaign_id,
-            "call_id": call_id
+            "message": "Pending call registered, awaiting SIP match",
+            "campaign": campaign,
+            "call_id": call_id,
+            "agent_user": agent_user
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[VICIDIAL] Error registering call mapping: {e}", exc_info=True)
+        logger.error(f"[VICIDIAL] Error registering pending call: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 # ==================== ADMIN API ENDPOINTS ====================

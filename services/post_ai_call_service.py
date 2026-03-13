@@ -264,11 +264,9 @@ class PostAICallService:
             vicidial_status = self._map_to_vicidial_status(call_status)
 
             hangup_result = await self.vicidial_service.hangup_call(
-                call_id=call_id,
-                phone=caller_phone,
+                openai_call_id=call_id,
                 status=vicidial_status,
-                reason=f"IA call completed - {call_status}",
-                duration=call_duration
+                notes=f"IA call completed - {call_status}"
             )
 
             if hangup_result.get("success"):

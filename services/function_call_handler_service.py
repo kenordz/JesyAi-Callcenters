@@ -137,12 +137,11 @@ class FunctionCallHandlerService:
                 return self._create_error_response("No puedo transferirte en este momento. Intenta de nuevo.")
 
             # Transferir llamada a través de Vicidial
+            # queue_name maps to Vicidial ingroup (e.g. "IN_ENTRADA")
+            ingroup = queue_name if queue_name != "general" else "IN_ENTRADA"
             transfer_result = await self.vicidial_service.transfer_to_agent(
-                call_id=call_id,
-                phone=phone,
-                queue_name=queue_name,
-                priority=priority,
-                reason=reason
+                openai_call_id=call_id,
+                ingroup=ingroup
             )
 
             if transfer_result.get("success"):
@@ -196,10 +195,9 @@ class FunctionCallHandlerService:
 
             # Finalizar llamada a través de Vicidial
             hangup_result = await self.vicidial_service.hangup_call(
-                call_id=call_id,
-                phone=phone,
+                openai_call_id=call_id,
                 status=status,
-                reason=reason
+                notes=reason
             )
 
             if hangup_result.get("success"):

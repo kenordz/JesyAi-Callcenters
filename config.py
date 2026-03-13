@@ -27,6 +27,7 @@ class Config:
     VICIDIAL_API_URL = os.getenv("VICIDIAL_API_URL", "")
     VICIDIAL_USER = os.getenv("VICIDIAL_USER", "")
     VICIDIAL_PASS = os.getenv("VICIDIAL_PASS", "")
+    VICIDIAL_AGENT_USER = os.getenv("VICIDIAL_AGENT_USER", "2000")
 
     # Timezone
     TIMEZONE = pytz.timezone("America/Mexico_City")

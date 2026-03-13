@@ -9,6 +9,7 @@ import os
 import logging
 from typing import Optional, Dict, Any
 from datetime import datetime
+import time
 import httpx
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,9 @@ class VicidialService:
         # In-memory call metadata for logging
         self._call_metadata: Dict[str, Dict[str, Any]] = {}
 
+        # Pending Vicidial calls awaiting SIP match (vicidial_call_id → metadata)
+        self._pending_vicidial_calls: Dict[str, Dict[str, Any]] = {}
+
         logger.info("[VICIDIAL] Service initialized")
         self._validate_config()
 
@@ -58,6 +62,90 @@ class VicidialService:
             )
         else:
             logger.info("[VICIDIAL] Configuration validated successfully")
+
+    def register_pending_call(
+        self, vicidial_call_id: str, campaign: str = "", agent_user: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Register a pending Vicidial call awaiting SIP match.
+        Called when the Vicidial GET webhook arrives before/simultaneously with the SIP call.
+
+        Args:
+            vicidial_call_id: Vicidial system call ID
+            campaign: Campaign name
+            agent_user: Vicidial agent user (e.g. "2000")
+
+        Returns:
+            Dict with registration status
+        """
+        # Clean up old pending calls (older than 30 seconds)
+        current = time.time()
+        expired = [
+            cid for cid, data in self._pending_vicidial_calls.items()
+            if current - data["timestamp"] > 30
+        ]
+        for cid in expired:
+            del self._pending_vicidial_calls[cid]
+
+        self._pending_vicidial_calls[vicidial_call_id] = {
+            "vicidial_call_id": vicidial_call_id,
+            "campaign": campaign,
+            "agent_user": agent_user or self.agent_user,
+            "timestamp": current,
+        }
+
+        logger.info(
+            f"[VICIDIAL] Pending call registered - Vicidial ID: {vicidial_call_id}, "
+            f"Campaign: {campaign}, Agent: {agent_user or self.agent_user}"
+        )
+
+        return {
+            "success": True,
+            "vicidial_call_id": vicidial_call_id,
+            "pending_count": len(self._pending_vicidial_calls),
+        }
+
+    def match_vicidial_to_sip(self, sip_call_id: str) -> Optional[str]:
+        """
+        Match a SIP call to a pending Vicidial call by timing (10-second window).
+        If a match is found, registers the mapping and removes from pending.
+
+        Args:
+            sip_call_id: OpenAI SIP call ID
+
+        Returns:
+            Vicidial call ID if matched, None otherwise
+        """
+        current = time.time()
+        best_match = None
+        best_time_diff = float("inf")
+
+        for vicidial_call_id, data in self._pending_vicidial_calls.items():
+            time_diff = current - data["timestamp"]
+            if time_diff <= 10 and time_diff < best_time_diff:
+                best_match = vicidial_call_id
+                best_time_diff = time_diff
+
+        if best_match:
+            pending_data = self._pending_vicidial_calls.pop(best_match)
+            campaign = pending_data.get("campaign", "")
+            agent_user = pending_data.get("agent_user", self.agent_user)
+
+            # Register the mapping
+            self.register_call(sip_call_id, best_match, campaign=campaign)
+
+            # Store agent_user in metadata for later API calls
+            if sip_call_id in self._call_metadata:
+                self._call_metadata[sip_call_id]["agent_user"] = agent_user
+
+            logger.info(
+                f"[VICIDIAL] SIP matched to Vicidial - SIP: {sip_call_id} → "
+                f"Vicidial: {best_match} (time_diff: {best_time_diff:.2f}s)"
+            )
+            return best_match
+
+        logger.debug(f"[VICIDIAL] No pending Vicidial call found for SIP: {sip_call_id}")
+        return None
 
     def register_call(self, openai_call_id: str, vicidial_call_id: str, campaign: str = "") -> None:
         """
@@ -125,11 +213,16 @@ class VicidialService:
             }
 
         try:
+            # Use per-call agent_user if available, fall back to default
+            call_agent_user = self.agent_user
+            if openai_call_id in self._call_metadata:
+                call_agent_user = self._call_metadata[openai_call_id].get("agent_user", self.agent_user)
+
             params = {
                 "source": "test",
                 "user": self.api_user,
                 "pass": self.api_pass,
-                "agent_user": self.agent_user,
+                "agent_user": call_agent_user,
                 "function": "ra_call_control",
                 "stage": "HANGUP",
                 "status": status,
@@ -206,11 +299,16 @@ class VicidialService:
             }
 
         try:
+            # Use per-call agent_user if available, fall back to default
+            call_agent_user = self.agent_user
+            if openai_call_id in self._call_metadata:
+                call_agent_user = self._call_metadata[openai_call_id].get("agent_user", self.agent_user)
+
             params = {
                 "source": "test",
                 "user": self.api_user,
                 "pass": self.api_pass,
-                "agent_user": self.agent_user,
+                "agent_user": call_agent_user,
                 "function": "ra_call_control",
                 "stage": "INGROUPTRANSFER",
                 "ingroup_choices": ingroup,
