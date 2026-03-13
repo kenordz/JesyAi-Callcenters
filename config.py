@@ -23,10 +23,10 @@ class Config:
     SUPABASE_URL = os.getenv("SUPABASE_URL", "https://okoaavyfahvopbjhbplu.supabase.co")
     SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
 
-    # ViciDial Integration (Optional - for call center routing)
-    VICIDIAL_API_URL = os.getenv("VICIDIAL_API_URL", "")
-    VICIDIAL_USER = os.getenv("VICIDIAL_USER", "")
-    VICIDIAL_PASS = os.getenv("VICIDIAL_PASS", "")
+    # ViciDial Integration (Enlaza Comunicaciones)
+    VICIDIAL_API_URL = os.getenv("VICIDIAL_API_URL", "https://d1-au0.enlaza.mx/agc/api.php")
+    VICIDIAL_USER = os.getenv("VICIDIAL_USER", "api_user")
+    VICIDIAL_PASS = os.getenv("VICIDIAL_PASS", "FkCtJ4wMpcTDa4nv")
     VICIDIAL_AGENT_USER = os.getenv("VICIDIAL_AGENT_USER", "2000")
 
     # Timezone

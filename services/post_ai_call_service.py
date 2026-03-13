@@ -288,15 +288,17 @@ class PostAICallService:
             Estado en formato de Vicidial
         """
         status_map = {
-            "completed": "COMPLETED",
-            "failed": "FAILED",
-            "abandoned": "ABANDONED",
-            "transferred": "TRANSFERRED",
-            "no_answer": "NO_ANSWER",
-            "busy": "BUSY"
+            "completed": "INFO",
+            "sale": "SALE",
+            "not_interested": "NI",
+            "callback": "CALLBK",
+            "transferred": "XFER",
+            "dnc": "DNC",
+            "failed": "NI",
+            "abandoned": "NI",
         }
 
-        return status_map.get(call_status, "COMPLETED")
+        return status_map.get(call_status, "INFO")
 
     def get_service_stats(self) -> Dict[str, Any]:
         """

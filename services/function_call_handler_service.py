@@ -184,7 +184,7 @@ class FunctionCallHandlerService:
 
         try:
             reason = arguments.get("reason", "Llamada finalizada")
-            status = arguments.get("status", "completed")
+            status = arguments.get("status", "INFO")
 
             logger.info(format_log_with_call_id(call_id, f"[FUNCTION-HANDLER] 📞 Finalizando llamada"))
             logger.info(format_log_with_call_id(call_id, f"[FUNCTION-HANDLER] Estado: {status}, Razón: {reason}"))

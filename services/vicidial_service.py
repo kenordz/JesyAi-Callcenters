@@ -36,7 +36,7 @@ class VicidialService:
         self.db_manager = database_manager
 
         # Load config from environment
-        self.api_url = os.getenv("VICIDIAL_API_URL", "https://api.enlaza.mx/api.php")
+        self.api_url = os.getenv("VICIDIAL_API_URL", "https://d1-au0.enlaza.mx/agc/api.php")
         self.api_user = os.getenv("VICIDIAL_USER", "")
         self.api_pass = os.getenv("VICIDIAL_PASS", "")
         self.agent_user = os.getenv("VICIDIAL_AGENT_USER", "2000")
@@ -197,7 +197,7 @@ class VicidialService:
 
         Args:
             openai_call_id: OpenAI call ID to hangup
-            status: Vicidial status code (e.g., "OK", "RESOLVED", "NO_ANSWER")
+            status: Vicidial status code (SALE, NI, CALLBK, XFER, DNC, INFO)
             notes: Optional notes to store
 
         Returns:

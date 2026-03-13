@@ -65,14 +65,15 @@ def hangup_call() -> Dict[str, Any]:
             "properties": {
                 "status": {
                     "type": "string",
-                    "enum": ["RESOLVED", "NO_ANSWER", "VOICEMAIL", "CALLBACK_REQUESTED", "TRANSFERRED"],
+                    "enum": ["SALE", "NI", "CALLBK", "XFER", "DNC", "INFO"],
                     "description": (
-                        "Call disposition status. "
-                        "RESOLVED: Issue was successfully resolved. "
-                        "NO_ANSWER: Customer did not respond during call. "
-                        "VOICEMAIL: Call went to voicemail. "
-                        "CALLBACK_REQUESTED: Customer requested a callback. "
-                        "TRANSFERRED: Call was transferred to human agent."
+                        "Vicidial call disposition status. "
+                        "SALE: Customer accepted/purchased. "
+                        "NI: Not interested. "
+                        "CALLBK: Customer requested a callback. "
+                        "XFER: Call was transferred to human agent. "
+                        "DNC: Do not call again. "
+                        "INFO: Information was provided only."
                     ),
                 },
                 "notes": {
@@ -160,7 +161,7 @@ CALLCENTER_TOOLS_SCHEMA = {
     "hangup_call": {
         "required_params": ["status"],
         "optional_params": ["notes"],
-        "valid_statuses": ["RESOLVED", "NO_ANSWER", "VOICEMAIL", "CALLBACK_REQUESTED", "TRANSFERRED"],
+        "valid_statuses": ["SALE", "NI", "CALLBK", "XFER", "DNC", "INFO"],
         "use_cases": [
             "Issue resolved and customer satisfied",
             "Maximum resolution attempts made",
