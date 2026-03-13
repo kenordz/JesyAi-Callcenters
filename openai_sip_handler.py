@@ -972,3 +972,7 @@ Ayuda a los clientes con información general."""
             import traceback
             logger.error(traceback.format_exc())
             return {"status": "error", "message": str(e)}
+
+
+# Singleton instance used by main.py
+openai_sip_handler = OpenAISIPHandler()
