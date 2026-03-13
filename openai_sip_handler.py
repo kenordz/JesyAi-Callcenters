@@ -260,7 +260,7 @@ Ayuda a los clientes con información general."""
             call_accept_config = {
                 "type": "realtime",
                 "instructions": instructions,
-                "model": "gpt-4o-mini-realtime-preview-2025-12-15",
+                "model": "gpt-realtime-mini-2025-12-15",
                 "tools": active_tools,
                 "audio": {
                     "input": {
@@ -281,7 +281,7 @@ Ayuda a los clientes con información general."""
             return {
                 "type": "realtime",
                 "instructions": """Eres un asistente virtual de call center. Saluda profesionalmente y ayuda a los clientes.""",
-                "model": "gpt-4o-mini-realtime-preview-2025-12-15",
+                "model": "gpt-realtime-mini-2025-12-15",
                 "tools": get_callcenter_tools(),
                 "audio": {
                     "input": {
@@ -898,7 +898,7 @@ Ayuda a los clientes con información general."""
                     call_accept_config = {
                         "type": "realtime",
                         "instructions": "Eres un asistente virtual. Saluda y ayuda al cliente.",
-                        "model": "gpt-4o-mini-realtime-preview-2025-12-15",
+                        "model": "gpt-realtime-mini-2025-12-15",
                         "tools": get_callcenter_tools(),
                         "voice": "sage"
                     }
