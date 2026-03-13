@@ -17,7 +17,7 @@ class Config:
     OPENAI_PROJECT_ID = "proj_9iTewA2CctKm7UGJO2jz4VWo"
     OPENAI_WEBHOOK_SECRET = os.getenv("OPENAI_WEBHOOK_SECRET") or os.getenv("OPENAI_WEBHOOK_CALLCENTER", "")
     OPENAI_SIP_ENDPOINT = "sip:proj_9iTewA2CctKm7UGJO2jz4VWo@sip.api.openai.com;transport=tls"
-    OPENAI_MODEL = "gpt-4o-mini-realtime-preview-2024-12-17"
+    OPENAI_MODEL = "gpt-4o-mini-realtime-preview-2025-12-15"
 
     # Supabase Configuration
     SUPABASE_URL = os.getenv("SUPABASE_URL", "https://okoaavyfahvopbjhbplu.supabase.co")
